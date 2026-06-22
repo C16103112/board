@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title></title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: #dceaff;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 16% 12%, rgba(42, 134, 190, 0.26), transparent 28%),
+        radial-gradient(circle at 86% 8%, rgba(247, 170, 61, 0.18), transparent 24%),
+        linear-gradient(135deg, #061332 0%, #101044 48%, #090b28 100%);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      content: "";
+      background-image:
+        linear-gradient(rgba(83, 166, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(83, 166, 255, 0.08) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.26));
+    }
+
+    .screen {
+      width: 1920px;
+      height: 1280px;
+      margin: 0;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1.05fr 1.4fr 1.05fr;
+      grid-template-rows: 98px 1fr 1fr 1.22fr;
+      gap: 12px;
+    }
+
+    .metric-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border: 0;
+      border-radius: 6px;
+      background:
+        linear-gradient(180deg, rgba(20, 39, 86, 0.82), rgba(9, 19, 54, 0.74)),
+        rgba(8, 19, 49, 0.84);
+      box-shadow:
+        inset 0 0 24px rgba(57, 147, 214, 0.12),
+        0 12px 30px rgba(0, 0, 0, 0.22);
+    }
+
+    .metric {
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .metric span {
+      color: #9cc7f2;
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .metric strong {
+      margin-top: 8px;
+      color: #ffc75b;
+      font-size: 36px;
+      line-height: 1;
+      text-shadow: 0 0 18px rgba(255, 199, 91, 0.3);
+    }
+
+    .panel {
+      padding: 36px 12px 10px;
+    }
+
+    .panel-title {
+      position: absolute;
+      top: 11px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      align-items: center;
+      min-height: 22px;
+      color: #dceaff;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .chart {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .center {
+      grid-row: span 2;
+    }
+
+    .bottom-wide {
+      grid-column: span 2;
+    }
+
+    .table-card {
+      padding: 36px 10px 10px;
+    }
+
+    .china-map {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .table-wrap {
+      height: calc(100% - 2px);
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(55, 213, 255, 0.65) rgba(8, 19, 49, 0.6);
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background: rgba(8, 19, 49, 0.6);
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      border-radius: 8px;
+      background: rgba(55, 213, 255, 0.65);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #dceaff;
+      font-size: 12px;
+    }
+
+    th,
+    td {
+      padding: 7px 8px;
+      border-bottom: 1px solid rgba(121, 183, 255, 0.14);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: #77d9ff;
+      font-weight: 700;
+      background: rgba(20, 53, 107, 0.96);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <section class="metric-row">
+      <article class="card metric">
+        <span>全国平均夜间睡眠时长</span>
+        <strong>7.2h</strong>
+      </article>
+      <article class="card metric">
+        <span>睡眠不足 7 小时比例</span>
+        <strong>36.33%</strong>
+      </article>
+      <article class="card metric">
+        <span>存在失眠经历比例</span>
+        <strong>80.95%</strong>
+      </article>
+      <article class="card metric">
+        <span>PSQI 睡眠质量不佳</span>
+        <strong>58.9%</strong>
+      </article>
+    </section>
+
+    <section class="card panel">
+      <div class="panel-title">入睡时间分布</div>
+      <div id="bedtimeChart" class="chart"></div>
+    </section>
+
+    <section class="card panel center">
+      <div class="panel-title">全国睡眠质量不佳分布</div>
+      <div id="chinaMapChart" class="china-map"></div>
+    </section>
+
+    <section class="card panel">
+      <div class="panel-title">睡眠时长自评分布</div>
+      <div id="durationChart" class="chart"></div>
+    </section>
+
+    <section class="card panel">
+      <div class="panel-title">失眠情况与满意度</div>
+      <div id="insomniaChart" class="chart"></div>
+    </section>
+
+    <section class="card panel">
+      <div class="panel-title">分地区睡眠质量对比</div>
+      <div id="provinceChart" class="chart"></div>
+    </section>
+
+    <section class="card panel">
+      <div class="panel-title">PSQI 睡眠问题发生率</div>
+      <div id="psqiChart" class="chart"></div>
+    </section>
+
+    <section class="card panel">
+      <div class="panel-title">核心指标来源对比</div>
+      <div id="sourceCompareChart" class="chart"></div>
+    </section>
+
+    <section class="card table-card">
+      <div class="panel-title">地区数据明细</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>地区</th>
+              <th>不足7小时</th>
+              <th>质量不佳</th>
+              <th>平均时长</th>
+              <th>样本量</th>
+            </tr>
+          </thead>
+          <tbody id="provinceRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const percent = value => `${(value * 100).toFixed(value * 100 >= 10 ? 1 : 2)}%`;
+    const axisText = "#a9c8ec";
+    const splitLine = "rgba(126, 183, 255, 0.16)";
+    const palette = ["#37d5ff", "#ffc75b", "#28df99", "#ff7676", "#b98cff", "#ff9f43"];
+
+    const bedtime = [
+      ["23:00前", 0.21],
+      ["23:00-00:00", 0.5353],
+      ["00:00-01:00", 0.2672],
+      ["01:00-02:00", 0.0326],
+      ["02:00之后", 0.21]
+    ];
+
+    const durationSelf = [
+      ["不足7小时", 0.3633],
+      ["7小时整", 0.4691],
+      ["8小时及以上", 0.1676]
+    ];
+
+    const insomnia = [
+      ["从未失眠", 0.1905],
+      ["偶尔失眠", 0.7231],
+      ["经常失眠", 0.0864]
+    ];
+
+    const satisfaction = [
+      ["不满意", 0.5697],
+      ["满意", 0.3439],
+      ["无所谓", 0.0864]
+    ];
+
+    const insomniaCombined = [
+      ...insomnia.map(item => ({ name: item[0], value: item[1], color: "#ffc75b" })),
+      ...satisfaction.map(item => ({ name: item[0], value: item[1], color: "#ff7676" }))
+    ];
+
+    const psqiProblems = [
+      ["入睡困难", 0.36],
+      ["日间困倦/注意力下降", 0.703],
+      ["半夜频繁惊醒", 0.17],
+      ["早醒无法再次入睡", 0.119],
+      ["每月需服用助眠产品", 0.041]
+    ];
+
+    const sourceCompare = {
+      categories: ["睡眠不足7小时", "凌晨2点后熬夜", "存在失眠经历", "睡眠质量较差", "零点前早睡", "日间困倦", "入睡困难"],
+      sleepResearch: [0.36, 0.21, null, null, 0.21, null, null],
+      youth: [0.3633, null, 0.8095, 0.5697, null, null, null],
+      psqi: [0.756, null, null, 0.589, null, 0.703, 0.36]
+    };
+
+    const provinces = [
+      { name: "上海市", less7: 0.356, poor: 0.31, avg: "7.8小时", sample: "2379" },
+      { name: "福建省", less7: 0.30, poor: 0.32, avg: "-", sample: "310" },
+      { name: "江苏省", less7: 0.38, poor: 0.30, avg: "-", sample: "-" },
+      { name: "江西省", less7: 0.176, poor: null, avg: "7.48小时", sample: "2605" },
+      { name: "吉林省", less7: null, poor: 0.338, avg: "-", sample: "-" },
+      { name: "贵州省", less7: null, poor: 0.537, avg: "-", sample: "-" },
+      { name: "香港特别行政区", less7: null, poor: 0.575, avg: "-", sample: "-" },
+      { name: "内蒙古自治区", less7: null, poor: 0.278, avg: "-", sample: "-" },
+      { name: "湖北省十堰市", less7: null, poor: 0.768, avg: "-", sample: "396" },
+      { name: "江苏省苏州市", less7: null, poor: 0.448, avg: "-", sample: "-" },
+      { name: "全国汇总", less7: 0.3633, poor: 0.589, avg: "7.2小时", sample: "25万+" },
+      { name: "东部区域", less7: 0.477, poor: null, avg: "-", sample: "-" },
+      { name: "中部区域", less7: 0.34, poor: null, avg: "-", sample: "-" }
+    ];
+
+    const mapSleepQuality = [
+      { name: "上海市", value: 31.0 },
+      { name: "福建省", value: 32.0 },
+      { name: "江苏省", value: 30.0 },
+      { name: "吉林省", value: 33.8 },
+      { name: "贵州省", value: 53.7 },
+      { name: "香港特别行政区", value: 57.5 },
+      { name: "内蒙古自治区", value: 27.8 },
+      { name: "湖北省", value: 76.8 }
+    ];
+
+    function initChart(id) {
+      return echarts.init(document.getElementById(id), null, { renderer: "canvas" });
+    }
+
+    function valueAxis() {
+      return {
+        type: "value",
+        axisLabel: { color: axisText, formatter: value => `${Math.round(value * 100)}%` },
+        splitLine: { lineStyle: { color: splitLine } }
+      };
+    }
+
+    function categoryAxis(data) {
+      return {
+        type: "category",
+        data,
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: "rgba(126, 183, 255, 0.35)" } },
+        axisLabel: { color: axisText }
+      };
+    }
+
+    function tooltip() {
+      return {
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        backgroundColor: "rgba(4, 12, 35, 0.92)",
+        borderColor: "rgba(75, 205, 255, 0.42)",
+        textStyle: { color: "#e9f6ff" },
+        valueFormatter: value => value == null ? "-" : percent(value)
+      };
+    }
+
+    const bedtimeChart = initChart("bedtimeChart");
+    bedtimeChart.setOption({
+      color: palette,
+      tooltip: {
+        trigger: "item",
+        backgroundColor: "rgba(4, 12, 35, 0.92)",
+        borderColor: "rgba(75, 205, 255, 0.42)",
+        textStyle: { color: "#e9f6ff" },
+        formatter: item => `${item.name}<br/>占比：${percent(item.value)}`
+      },
+      series: [{
+        type: "pie",
+        radius: ["38%", "72%"],
+        center: ["50%", "54%"],
+        label: { color: "#dceaff", formatter: "{b}\n{d}%" },
+        labelLine: { lineStyle: { color: "rgba(220, 234, 255, 0.48)" } },
+        data: bedtime.map(([name, value]) => ({ name, value }))
+      }]
+    });
+
+    const durationChart = initChart("durationChart");
+    durationChart.setOption({
+      color: ["#37d5ff"],
+      tooltip: tooltip(),
+      grid: { left: 46, right: 14, top: 14, bottom: 38 },
+      xAxis: categoryAxis(durationSelf.map(item => item[0])),
+      yAxis: valueAxis(),
+      series: [{
+        type: "bar",
+        barWidth: 34,
+        data: durationSelf.map(item => item[1]),
+        label: { show: true, position: "top", color: "#ffc75b", formatter: item => percent(item.value) },
+        itemStyle: { borderRadius: [5, 5, 0, 0] }
+      }]
+    });
+
+    const insomniaChart = initChart("insomniaChart");
+    insomniaChart.setOption({
+      color: ["#ffc75b"],
+      tooltip: tooltip(),
+      grid: { left: 82, right: 42, top: 14, bottom: 20 },
+      xAxis: valueAxis(),
+      yAxis: categoryAxis(insomniaCombined.map(item => item.name)),
+      series: [{
+        name: "占比",
+        type: "bar",
+        barWidth: 16,
+        data: insomniaCombined.map(item => ({
+          value: item.value,
+          itemStyle: { color: item.color, borderRadius: [0, 5, 5, 0] }
+        })),
+        label: { show: true, position: "right", color: "#dceaff", formatter: item => percent(item.value) },
+        itemStyle: { borderRadius: [0, 5, 5, 0] }
+      }]
+    });
+
+    const psqiChart = initChart("psqiChart");
+    psqiChart.setOption({
+      color: ["#28df99"],
+      tooltip: tooltip(),
+      grid: { left: 132, right: 36, top: 14, bottom: 20 },
+      xAxis: valueAxis(),
+      yAxis: categoryAxis(psqiProblems.map(item => item[0])),
+      series: [{
+        type: "bar",
+        barWidth: 18,
+        data: psqiProblems.map(item => item[1]),
+        label: { show: true, position: "right", color: "#dceaff", formatter: item => percent(item.value) },
+        itemStyle: { borderRadius: [0, 5, 5, 0] }
+      }]
+    });
+
+    const sourceCompareChart = initChart("sourceCompareChart");
+    sourceCompareChart.setOption({
+      color: ["#37d5ff", "#ffc75b", "#28df99"],
+      tooltip: tooltip(),
+      legend: {
+        top: 2,
+        itemWidth: 10,
+        itemHeight: 10,
+        textStyle: { color: axisText, fontSize: 12 }
+      },
+      grid: { left: 120, right: 28, top: 46, bottom: 28 },
+      xAxis: valueAxis(),
+      yAxis: categoryAxis(sourceCompare.categories),
+      series: [
+        { name: "睡眠研究会", type: "bar", barGap: 0, data: sourceCompare.sleepResearch, label: { show: true, position: "right", color: "#dceaff", formatter: item => item.value == null ? "" : percent(item.value) } },
+        { name: "青年网问卷", type: "bar", data: sourceCompare.youth, label: { show: true, position: "right", color: "#dceaff", formatter: item => item.value == null ? "" : percent(item.value) } },
+        { name: "PSQI调研", type: "bar", data: sourceCompare.psqi, label: { show: true, position: "right", color: "#dceaff", formatter: item => item.value == null ? "" : percent(item.value) } }
+      ]
+    });
+
+    const provinceChart = initChart("provinceChart");
+    provinceChart.setOption({
+      color: ["#37d5ff", "#ff7676"],
+      tooltip: tooltip(),
+      legend: {
+        top: 2,
+        textStyle: { color: axisText, fontSize: 12 }
+      },
+      grid: { left: 108, right: 32, top: 46, bottom: 26 },
+      xAxis: valueAxis(),
+      yAxis: categoryAxis(provinces.map(item => item.name)),
+      series: [
+        {
+          name: "睡眠不足7小时",
+          type: "bar",
+          data: provinces.map(item => item.less7),
+          label: {
+            show: true,
+            position: "right",
+            color: "#dceaff",
+            formatter: item => item.value == null ? "" : percent(item.value)
+          }
+        },
+        {
+          name: "睡眠质量不佳",
+          type: "bar",
+          data: provinces.map(item => item.poor),
+          label: {
+            show: true,
+            position: "right",
+            color: "#dceaff",
+            formatter: item => item.value == null ? "" : percent(item.value)
+          }
+        }
+      ]
+    });
+
+    const chinaMapChart = initChart("chinaMapChart");
+
+    function renderChinaMap() {
+      chinaMapChart.setOption({
+        tooltip: {
+          trigger: "item",
+          backgroundColor: "rgba(4, 12, 35, 0.92)",
+          borderColor: "rgba(75, 205, 255, 0.42)",
+          textStyle: { color: "#e9f6ff" },
+          formatter: item => {
+            if (item.value == null || Number.isNaN(item.value)) return `${item.name}<br/>暂无数据`;
+            return `${item.name}<br/>睡眠质量不佳占比：${item.value.toFixed(1)}%`;
+          }
+        },
+        visualMap: {
+          min: 25,
+          max: 80,
+          left: 4,
+          bottom: 6,
+          itemWidth: 10,
+          itemHeight: 70,
+          text: ["高", "低"],
+          textStyle: { color: axisText, fontSize: 10 },
+          inRange: { color: ["#163762", "#37d5ff", "#ffc75b", "#ff7676"] },
+          calculable: false
+        },
+        series: [{
+          name: "睡眠质量不佳占比",
+          type: "map",
+          map: "china",
+          roam: false,
+          zoom: 1.18,
+          top: 10,
+          bottom: 4,
+          label: {
+            show: true,
+            color: "#bcdcff",
+            fontSize: 9
+          },
+          itemStyle: {
+            areaColor: "rgba(25, 62, 121, 0.72)",
+            borderColor: "rgba(104, 184, 255, 0.42)",
+            borderWidth: 0.8
+          },
+          emphasis: {
+            label: { color: "#ffffff" },
+            itemStyle: { areaColor: "#ffc75b" }
+          },
+          data: mapSleepQuality
+        }]
+      });
+    }
+
+    function renderMapFallback() {
+      chinaMapChart.setOption({
+        color: ["#37d5ff"],
+        tooltip: tooltip(),
+        grid: { left: 52, right: 28, top: 12, bottom: 22 },
+        xAxis: valueAxis(),
+        yAxis: categoryAxis(mapSleepQuality.map(item => item.name)),
+        series: [{
+          type: "bar",
+          barWidth: 12,
+          data: mapSleepQuality.map(item => item.value / 100),
+          label: {
+            show: true,
+            position: "right",
+            color: "#dceaff",
+            formatter: item => `${(item.value * 100).toFixed(1)}%`
+          },
+          itemStyle: { borderRadius: [0, 5, 5, 0] }
+        }]
+      });
+    }
+
+    fetch("https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json")
+      .then(response => response.json())
+      .then(chinaJson => {
+        echarts.registerMap("china", chinaJson);
+        renderChinaMap();
+      })
+      .catch(renderMapFallback);
+
+    document.getElementById("provinceRows").innerHTML = provinces.map(item => `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.less7 == null ? "-" : percent(item.less7)}</td>
+        <td>${item.poor == null ? "-" : percent(item.poor)}</td>
+        <td>${item.avg}</td>
+        <td>${item.sample}</td>
+      </tr>
+    `).join("");
+
+  </script>
+</body>
+</html>
