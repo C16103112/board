@@ -43,8 +43,8 @@
     }
 
     .screen {
-      width: 1920px;
-      height: 1280px;
+      width: 100vw;
+      height: 100vh;
       margin: 0;
       padding: 14px;
       display: grid;
@@ -595,6 +595,20 @@
         <td>${item.sample}</td>
       </tr>
     `).join("");
+
+    const charts = [
+      bedtimeChart,
+      durationChart,
+      insomniaChart,
+      psqiChart,
+      sourceCompareChart,
+      provinceChart,
+      chinaMapChart
+    ];
+
+    new ResizeObserver(() => {
+      charts.forEach(chart => chart.resize());
+    }).observe(document.querySelector(".screen"));
 
   </script>
 </body>
